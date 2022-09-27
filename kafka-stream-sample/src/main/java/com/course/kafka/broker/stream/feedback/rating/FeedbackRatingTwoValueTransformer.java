@@ -21,13 +21,16 @@ public class FeedbackRatingTwoValueTransformer implements ValueTransformer<Feedb
         if (StringUtils.isEmpty(stateStoreName)) {
             throw new IllegalArgumentException("stateStoreName must not empty");
         }
+
         this.stateStoreName = stateStoreName;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void init(ProcessorContext context) {
         this.processorContext = context;
-        this.ratingStateStore = this.processorContext.getStateStore(stateStoreName);
+        this.ratingStateStore = (KeyValueStore<String, FeedbackRatingTwoStoreValue>) this.processorContext
+                .getStateStore(stateStoreName);
     }
 
     @Override
@@ -35,30 +38,36 @@ public class FeedbackRatingTwoValueTransformer implements ValueTransformer<Feedb
         FeedbackRatingTwoStoreValue storeValue = Optional.ofNullable(ratingStateStore.get(value.getLocation()))
                 .orElse(new FeedbackRatingTwoStoreValue());
         Map<Integer, Long> ratingMap = Optional.ofNullable(storeValue.getRatingMap()).orElse(new TreeMap<>());
-        Long currentRatingCount = Optional.ofNullable(ratingMap.get(value.getRating())).orElse(0L);
-        long newRatingCount = currentRatingCount + 1;
-        ratingMap.put(value.getRating(), newRatingCount);
 
+        Long currentRatingCount = Optional.ofNullable(ratingMap.get(value.getRating())).orElse(0l);
+        Long newRatingCount = currentRatingCount + 1;
+
+        ratingMap.put(value.getRating(), newRatingCount);
         ratingStateStore.put(value.getLocation(), storeValue);
+
         FeedbackRatingTwoMessage branchRating = new FeedbackRatingTwoMessage();
         branchRating.setLocation(value.getLocation());
         branchRating.setRatingMap(ratingMap);
         branchRating.setAverageRating(calculateAverage(ratingMap));
 
-        return null;
+        return branchRating;
     }
 
     private double calculateAverage(Map<Integer, Long> ratingMap) {
-        long sumRating = 0L;
-        long countRating = 0L;
+        Long sumRating = 0l;
+        Long countRating = 0l;
 
         for (Map.Entry<Integer, Long> entry : ratingMap.entrySet()) {
-            sumRating += null;
+            sumRating += entry.getKey() * entry.getValue();
+            countRating += entry.getValue();
         }
+
+        return Math.round((double) sumRating / countRating * 10d) / 10d;
     }
 
     @Override
     public void close() {
+        // TODO Auto-generated method stub
 
     }
 }
