@@ -12,7 +12,7 @@ import org.springframework.kafka.support.serializer.JsonSerde;
 
 import java.time.Duration;
 
-@Configuration
+//@Configuration
 public class InventoryHoppingStream {
     @Bean
     public KStream<String, InventoryMessage> kStreamInventory(StreamsBuilder builder) {
