@@ -29,7 +29,7 @@ public class PremiumOfferGlobalKTableStream {
                         .selectKey((k, v) -> v.getUsername());
 
         List<String> filterLevel = new ArrayList<>(Arrays.asList("gold", "diamond"));
-       builder.stream("t-commodity-premium-user", Consumed.with(stringSerde, userSerde))
+        builder.stream("t-commodity-premium-user", Consumed.with(stringSerde, userSerde))
                .filter((k,v) -> filterLevel.contains(v.getLevel().toLowerCase()))
                .to("t-commodity-premium-user-filtered", Produced.with(stringSerde, userSerde));
 
